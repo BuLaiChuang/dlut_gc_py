@@ -1,29 +1,30 @@
 import pika
 import time
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host='localhost'))
-
+credentials = pika.PlainCredentials('xuan', '123456')  # mq用户名和密码
+# 虚拟队列需要指定参数 virtual_host，如果是默认的可以不填。
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='210.30.97.163', port=5672, virtual_host='/', credentials=credentials))
 channel = connection.channel()
 
-channel.queue_declare(queue='rpc_queue')
+result = channel.queue_declare(queue = 'rpc_queue',durable=True)
 
 # 计算斐波那契
-def fib(n):
-    if n == 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fib(n - 1) + fib(n - 2)
+# def fib(n):
+#     if n == 0:
+#         return 0
+#     elif n == 1:
+#         return 1
+#     else:
+#         return fib(n - 1) + fib(n - 2)
 
+# 调用盛夏代码查询相关的论文
+def shengxia(n):
+    return n*10
 
 def on_request(ch, method, props, body):
     n = int(body)
-
-    print(" [.] fib(%s)" % n)
-    response = fib(n)
-
+    print(" [.] shengxia(%s)" % n)
+    response = shengxia(n)
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to, # 从props中取出客户端放的reply_to
                      properties=pika.BasicProperties(correlation_id= \
